@@ -32,12 +32,12 @@ class CommentAdapter : ListAdapter<Comment, CommentAdapter.CommentViewHolder>(Co
 
         fun bind(comment: Comment) {
             tvAuthorName.text = comment.author.displayName
-            tvContent.text = comment.content
+            tvContent.text = comment.text
             tvTimestamp.text = formatTimestamp(comment.createdAt)
 
-            comment.author.avatar?.let { avatar ->
+            comment.author.profileImage?.let { profileImage ->
                 Glide.with(itemView.context)
-                    .load(avatar)
+                    .load(profileImage)
                     .placeholder(R.drawable.ic_profile_placeholder)
                     .circleCrop()
                     .into(ivProfileImage)
