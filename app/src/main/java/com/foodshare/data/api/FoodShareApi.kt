@@ -10,10 +10,10 @@ interface FoodShareApi {
 
     // Mobile Auth
     @POST("api/mobile/auth/sync")
-    suspend fun syncFirebaseUser(): Response<User>
+    suspend fun syncFirebaseUser(): Response<AuthResponse>
 
     @GET("api/mobile/auth/me")
-    suspend fun getCurrentUser(): Response<User>
+    suspend fun getCurrentUser(): Response<AuthResponse>
 
     // Posts
     @GET("api/posts")

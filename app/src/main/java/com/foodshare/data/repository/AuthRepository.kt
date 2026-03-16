@@ -29,8 +29,8 @@ class AuthRepository @Inject constructor(
         try {
             firebaseAuth.signInWithEmailAndPassword(email, password).await()
             val response = api.syncFirebaseUser()
-            if (response.isSuccessful && response.body() != null) {
-                val user = response.body()!!
+            if (response.isSuccessful && response.body()?.user != null) {
+                val user = response.body()!!.user
                 userDao.insertUser(user)
                 emit(Resource.Success(user))
             } else {
@@ -57,8 +57,8 @@ class AuthRepository @Inject constructor(
             }
 
             val response = api.syncFirebaseUser()
-            if (response.isSuccessful && response.body() != null) {
-                val user = response.body()!!
+            if (response.isSuccessful && response.body()?.user != null) {
+                val user = response.body()!!.user
                 userDao.insertUser(user)
                 emit(Resource.Success(user))
             } else {
@@ -73,8 +73,8 @@ class AuthRepository @Inject constructor(
         emit(Resource.Loading())
         try {
             val response = api.syncFirebaseUser()
-            if (response.isSuccessful && response.body() != null) {
-                val user = response.body()!!
+            if (response.isSuccessful && response.body()?.user != null) {
+                val user = response.body()!!.user
                 userDao.insertUser(user)
                 emit(Resource.Success(user))
             } else {

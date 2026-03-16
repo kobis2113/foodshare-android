@@ -10,7 +10,7 @@ import kotlinx.parcelize.Parcelize
 @Entity(tableName = "users")
 data class User(
     @PrimaryKey
-    @SerializedName("_id")
+    @SerializedName(value = "id", alternate = ["_id"])
     val id: String,
     val email: String,
     val displayName: String,
