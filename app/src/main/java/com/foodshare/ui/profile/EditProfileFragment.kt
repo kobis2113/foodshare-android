@@ -25,8 +25,8 @@ import com.bumptech.glide.Glide
 import com.foodshare.R
 import com.foodshare.util.Resource
 import com.foodshare.util.loadCircleImage
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.textfield.TextInputEditText
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
@@ -39,9 +39,9 @@ class EditProfileFragment : Fragment() {
     private lateinit var ivBackButton: ImageButton
     private lateinit var tvTitle: TextView
     private lateinit var ivProfileImage: ImageView
-    private lateinit var btnChangePhoto: MaterialButton
+    private lateinit var btnChangePhoto: FloatingActionButton
     private lateinit var etDisplayName: TextInputEditText
-    private lateinit var btnSave: MaterialButton
+    private lateinit var btnSave: com.google.android.material.button.MaterialButton
     private lateinit var progressBar: ProgressBar
 
     private var selectedImageUri: Uri? = null
