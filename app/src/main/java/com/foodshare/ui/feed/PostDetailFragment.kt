@@ -140,9 +140,9 @@ class PostDetailFragment : Fragment() {
             .placeholder(R.drawable.ic_placeholder)
             .into(ivPostImage)
 
-        post.author.avatar?.let { avatar ->
+        post.author.profileImage?.let { profileImage ->
             Glide.with(this)
-                .load(avatar)
+                .load(profileImage)
                 .placeholder(R.drawable.ic_profile_placeholder)
                 .circleCrop()
                 .into(ivProfileImage)
