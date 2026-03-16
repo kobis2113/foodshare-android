@@ -168,10 +168,10 @@ class PostDetailFragment : Fragment() {
             tvProtein.text = "${nutrition.protein ?: 0}g"
             tvCarbs.text = "${nutrition.carbs ?: 0}g"
             tvFat.text = "${nutrition.fat ?: 0}g"
-            nutrition.tips?.let { tips ->
+            if (!nutrition.healthTips.isNullOrEmpty()) {
                 tvNutritionTip.visibility = View.VISIBLE
-                tvNutritionTip.text = tips
-            } ?: run {
+                tvNutritionTip.text = nutrition.healthTips.joinToString("\n• ", "• ")
+            } else {
                 tvNutritionTip.visibility = View.GONE
             }
         } ?: run {
