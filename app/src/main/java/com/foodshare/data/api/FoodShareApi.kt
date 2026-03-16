@@ -64,24 +64,24 @@ interface FoodShareApi {
     suspend fun addComment(
         @Path("id") postId: String,
         @Field("text") text: String
-    ): Response<Comment>
+    ): Response<CommentResponse>
 
     // Users
     @GET("api/users/me")
-    suspend fun getMyProfile(): Response<User>
+    suspend fun getMyProfile(): Response<UserProfileResponse>
 
     @Multipart
     @PUT("api/users/me")
     suspend fun updateProfile(
         @Part("displayName") displayName: RequestBody?,
         @Part profileImage: MultipartBody.Part?
-    ): Response<User>
+    ): Response<UpdateProfileResponse>
 
     @GET("api/users/me/posts")
-    suspend fun getMyPosts(): Response<List<Post>>
+    suspend fun getMyPosts(): Response<UserPostsResponse>
 
     @GET("api/users/me/liked")
-    suspend fun getLikedPosts(): Response<List<Post>>
+    suspend fun getLikedPosts(): Response<UserPostsResponse>
 
     @GET("api/users/{id}")
     suspend fun getUserProfile(@Path("id") userId: String): Response<User>

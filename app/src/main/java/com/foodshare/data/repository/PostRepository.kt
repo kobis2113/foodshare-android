@@ -169,8 +169,8 @@ class PostRepository @Inject constructor(
         emit(Resource.Loading())
         try {
             val response = api.addComment(postId, text)
-            if (response.isSuccessful && response.body() != null) {
-                emit(Resource.Success(response.body()!!))
+            if (response.isSuccessful && response.body()?.comment != null) {
+                emit(Resource.Success(response.body()!!.comment))
             } else {
                 emit(Resource.Error(response.message() ?: "Failed to add comment"))
             }
