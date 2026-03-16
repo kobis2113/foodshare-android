@@ -37,6 +37,7 @@ interface FoodShareApi {
     suspend fun createPost(
         @Part("mealName") mealName: RequestBody,
         @Part("description") description: RequestBody?,
+        @Part("nutrition") nutrition: RequestBody?,
         @Part image: MultipartBody.Part
     ): Response<PostResponse>
 
@@ -46,6 +47,7 @@ interface FoodShareApi {
         @Path("id") postId: String,
         @Part("mealName") mealName: RequestBody,
         @Part("description") description: RequestBody?,
+        @Part("nutrition") nutrition: RequestBody?,
         @Part image: MultipartBody.Part?
     ): Response<PostResponse>
 

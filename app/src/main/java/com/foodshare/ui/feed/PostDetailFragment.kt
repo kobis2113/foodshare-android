@@ -14,10 +14,11 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
-import com.bumptech.glide.Glide
 import com.foodshare.R
 import com.foodshare.data.model.Post
 import com.foodshare.util.Resource
+import com.foodshare.util.loadCircleImage
+import com.foodshare.util.loadImage
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import dagger.hilt.android.AndroidEntryPoint
@@ -134,21 +135,9 @@ class PostDetailFragment : Fragment() {
     }
 
     private fun bindPost(post: Post) {
-        // Load images
-        Glide.with(this)
-            .load(post.image)
-            .placeholder(R.drawable.ic_placeholder)
-            .into(ivPostImage)
-
-        post.author.profileImage?.let { profileImage ->
-            Glide.with(this)
-                .load(profileImage)
-                .placeholder(R.drawable.ic_profile_placeholder)
-                .circleCrop()
-                .into(ivProfileImage)
-        } ?: run {
-            ivProfileImage.setImageResource(R.drawable.ic_profile_placeholder)
-        }
+        // Load images using extension functions that handle base URL
+        ivPostImage.loadImage(post.image)
+        ivProfileImage.loadCircleImage(post.author.profileImage)
 
         // Text content
         tvAuthorName.text = post.author.displayName

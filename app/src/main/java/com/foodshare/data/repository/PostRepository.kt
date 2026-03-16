@@ -70,17 +70,19 @@ class PostRepository @Inject constructor(
     suspend fun createPost(
         mealName: String,
         description: String?,
-        imageFile: File
+        imageFile: File,
+        nutritionJson: String? = null
     ): Flow<Resource<Post>> = flow {
         emit(Resource.Loading())
         try {
             val mealNameBody = mealName.toRequestBody("text/plain".toMediaTypeOrNull())
             val descriptionBody = description?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val nutritionBody = nutritionJson?.toRequestBody("text/plain".toMediaTypeOrNull())
             val mimeType = getMimeType(imageFile.name)
             val imageBody = imageFile.asRequestBody(mimeType.toMediaTypeOrNull())
             val imagePart = MultipartBody.Part.createFormData("image", imageFile.name, imageBody)
 
-            val response = api.createPost(mealNameBody, descriptionBody, imagePart)
+            val response = api.createPost(mealNameBody, descriptionBody, nutritionBody, imagePart)
             if (response.isSuccessful && response.body()?.post != null) {
                 val post = response.body()!!.post
                 postDao.insertPost(post)
@@ -97,19 +99,21 @@ class PostRepository @Inject constructor(
         postId: String,
         mealName: String,
         description: String?,
-        imageFile: File?
+        imageFile: File?,
+        nutritionJson: String? = null
     ): Flow<Resource<Post>> = flow {
         emit(Resource.Loading())
         try {
             val mealNameBody = mealName.toRequestBody("text/plain".toMediaTypeOrNull())
             val descriptionBody = description?.toRequestBody("text/plain".toMediaTypeOrNull())
+            val nutritionBody = nutritionJson?.toRequestBody("text/plain".toMediaTypeOrNull())
             val imagePart = imageFile?.let {
                 val mimeType = getMimeType(it.name)
                 val imageBody = it.asRequestBody(mimeType.toMediaTypeOrNull())
                 MultipartBody.Part.createFormData("image", it.name, imageBody)
             }
 
-            val response = api.updatePost(postId, mealNameBody, descriptionBody, imagePart)
+            val response = api.updatePost(postId, mealNameBody, descriptionBody, nutritionBody, imagePart)
             if (response.isSuccessful && response.body()?.post != null) {
                 val post = response.body()!!.post
                 postDao.insertPost(post)
@@ -196,11 +200,12 @@ class PostRepository @Inject constructor(
     suspend fun createPost(
         imagePart: MultipartBody.Part,
         mealNameBody: okhttp3.RequestBody,
-        descriptionBody: okhttp3.RequestBody?
+        descriptionBody: okhttp3.RequestBody?,
+        nutritionBody: okhttp3.RequestBody? = null
     ): Flow<Resource<Post>> = flow {
         emit(Resource.Loading())
         try {
-            val response = api.createPost(mealNameBody, descriptionBody, imagePart)
+            val response = api.createPost(mealNameBody, descriptionBody, nutritionBody, imagePart)
             if (response.isSuccessful && response.body()?.post != null) {
                 val post = response.body()!!.post
                 postDao.insertPost(post)
@@ -218,11 +223,12 @@ class PostRepository @Inject constructor(
         postId: String,
         imagePart: MultipartBody.Part?,
         mealNameBody: okhttp3.RequestBody,
-        descriptionBody: okhttp3.RequestBody?
+        descriptionBody: okhttp3.RequestBody?,
+        nutritionBody: okhttp3.RequestBody? = null
     ): Flow<Resource<Post>> = flow {
         emit(Resource.Loading())
         try {
-            val response = api.updatePost(postId, mealNameBody, descriptionBody, imagePart)
+            val response = api.updatePost(postId, mealNameBody, descriptionBody, nutritionBody, imagePart)
             if (response.isSuccessful && response.body()?.post != null) {
                 val post = response.body()!!.post
                 postDao.insertPost(post)
@@ -254,6 +260,20 @@ class PostRepository @Inject constructor(
             }
         } catch (e: Exception) {
             emit(Resource.Error(e.message ?: "Failed to get nutrition tips"))
+        }
+    }
+
+    suspend fun getNutritionData(mealName: String): Flow<Resource<NutritionResponse>> = flow {
+        emit(Resource.Loading())
+        try {
+            val response = api.getNutrition(mealName)
+            if (response.isSuccessful && response.body() != null) {
+                emit(Resource.Success(response.body()!!))
+            } else {
+                emit(Resource.Error(response.message() ?: "Failed to get nutrition data"))
+            }
+        } catch (e: Exception) {
+            emit(Resource.Error(e.message ?: "Failed to get nutrition data"))
         }
     }
 }
