@@ -124,6 +124,7 @@
                 android:text="Delete Post"
                 android:textColor="@color/error"
                 app:icon="@drawable/ic_delete"
+                app:iconGravity="textStart"
                 app:iconTint="@color/error" />
         </LinearLayout>
     </ScrollView>
