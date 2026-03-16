@@ -130,6 +130,12 @@ class FeedFragment : Fragment() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Auto-refresh when returning to the feed
+        viewModel.loadPosts(refresh = true)
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

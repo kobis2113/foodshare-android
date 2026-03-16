@@ -25,6 +25,7 @@ import androidx.navigation.fragment.navArgs
 import com.bumptech.glide.Glide
 import com.foodshare.R
 import com.foodshare.util.Resource
+import com.foodshare.util.loadImage
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
@@ -231,10 +232,7 @@ class EditPostFragment : Fragment() {
                     resource.data?.let { post ->
                         etMealName.setText(post.mealName)
                         etDescription.setText(post.description ?: "")
-                        Glide.with(this)
-                            .load(post.image)
-                            .centerCrop()
-                            .into(ivPostImage)
+                        ivPostImage.loadImage(post.image)
                     }
                 }
                 is Resource.Error -> {

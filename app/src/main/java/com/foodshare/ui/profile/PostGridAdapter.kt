@@ -9,9 +9,9 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
 import com.foodshare.R
 import com.foodshare.data.model.Post
+import com.foodshare.util.loadImage
 
 class PostGridAdapter(
     private val onPostClick: (Post) -> Unit,
@@ -55,11 +55,7 @@ class PostGridAdapter(
             tvMealName.text = post.mealName
             tvLikesCount.text = "${post.likesCount}"
 
-            Glide.with(itemView.context)
-                .load(post.image)
-                .placeholder(R.drawable.ic_placeholder)
-                .centerCrop()
-                .into(ivPostImage)
+            ivPostImage.loadImage(post.image)
 
             btnEdit.visibility = if (showEditButton) View.VISIBLE else View.GONE
         }

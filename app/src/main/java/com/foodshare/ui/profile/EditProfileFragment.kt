@@ -24,6 +24,7 @@ import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.foodshare.R
 import com.foodshare.util.Resource
+import com.foodshare.util.loadCircleImage
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
@@ -202,13 +203,7 @@ class EditProfileFragment : Fragment() {
                     progressBar.visibility = View.GONE
                     resource.data?.let { user ->
                         etDisplayName.setText(user.displayName)
-                        user.avatar?.let { avatar ->
-                            Glide.with(this)
-                                .load(avatar)
-                                .placeholder(R.drawable.ic_profile_placeholder)
-                                .circleCrop()
-                                .into(ivProfileImage)
-                        }
+                        ivProfileImage.loadCircleImage(user.profileImage)
                     }
                 }
                 is Resource.Error -> {
