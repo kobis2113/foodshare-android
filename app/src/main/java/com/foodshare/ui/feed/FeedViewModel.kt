@@ -32,10 +32,6 @@ class FeedViewModel @Inject constructor(
     private var hasMore = true
     private var isLoading = false
 
-    init {
-        loadPosts()
-    }
-
     fun loadPosts(refresh: Boolean = false) {
         if (isLoading) return
 
