@@ -6,10 +6,12 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.foodshare.data.model.NutritionResponse
 import com.foodshare.data.model.Post
 import com.foodshare.data.repository.PostRepository
 import com.foodshare.util.Resource
 import com.foodshare.util.getFileFromUri
+import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -39,6 +41,9 @@ class PostViewModel @Inject constructor(
     private val _nutritionTips = MutableLiveData<Resource<String>>()
     val nutritionTips: LiveData<Resource<String>> = _nutritionTips
 
+    // Store the raw nutrition data for sending with post
+    private var currentNutritionData: NutritionResponse? = null
+
     fun loadPost(postId: String) {
         viewModelScope.launch {
             postRepository.getPost(postId).collectLatest { result ->
@@ -64,8 +69,26 @@ class PostViewModel @Inject constructor(
                 val mealNameBody = mealName.toRequestBody("text/plain".toMediaTypeOrNull())
                 val descriptionBody = description?.toRequestBody("text/plain".toMediaTypeOrNull())
 
-                postRepository.createPost(imagePart, mealNameBody, descriptionBody).collectLatest { result ->
+                // Convert nutrition data to JSON if available
+                val nutritionBody = currentNutritionData?.let { nutrition ->
+                    val nutritionJson = Gson().toJson(mapOf(
+                        "calories" to nutrition.calories,
+                        "protein" to nutrition.protein,
+                        "carbs" to nutrition.carbs,
+                        "fat" to nutrition.fat,
+                        "fiber" to nutrition.fiber,
+                        "sugar" to nutrition.sugar,
+                        "healthTips" to nutrition.healthTips
+                    ))
+                    nutritionJson.toRequestBody("text/plain".toMediaTypeOrNull())
+                }
+
+                postRepository.createPost(imagePart, mealNameBody, descriptionBody, nutritionBody).collectLatest { result ->
                     _createPostResult.value = result
+                    if (result is Resource.Success) {
+                        // Clear nutrition data after successful post
+                        currentNutritionData = null
+                    }
                 }
             } catch (e: Exception) {
                 _createPostResult.value = Resource.Error(e.message ?: "Failed to create post")
@@ -128,9 +151,35 @@ class PostViewModel @Inject constructor(
 
     fun getNutritionTips(mealName: String) {
         viewModelScope.launch {
-            postRepository.getNutritionTips(mealName).collectLatest { result ->
-                _nutritionTips.value = result
+            // First get the raw nutrition data and store it
+            postRepository.getNutritionData(mealName).collectLatest { result ->
+                when (result) {
+                    is Resource.Loading -> {
+                        _nutritionTips.value = Resource.Loading()
+                    }
+                    is Resource.Success -> {
+                        currentNutritionData = result.data
+                        // Format tips for display
+                        val nutrition = result.data
+                        val tips = buildString {
+                            append("Calories: ${nutrition?.calories ?: "N/A"} kcal\n")
+                            append("Protein: ${nutrition?.protein ?: "N/A"}g\n")
+                            append("Carbs: ${nutrition?.carbs ?: "N/A"}g\n")
+                            append("Fat: ${nutrition?.fat ?: "N/A"}g\n")
+                            nutrition?.tips?.let { append("\n$it") }
+                        }
+                        _nutritionTips.value = Resource.Success(tips)
+                    }
+                    is Resource.Error -> {
+                        _nutritionTips.value = Resource.Error(result.message ?: "Failed to get nutrition tips")
+                    }
+                }
             }
         }
+    }
+
+    fun clearNutritionData() {
+        currentNutritionData = null
+        _nutritionTips.value = null
     }
 }
