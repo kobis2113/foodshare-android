@@ -11,10 +11,10 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
-import com.bumptech.glide.Glide
 import com.foodshare.R
 import com.foodshare.data.model.User
 import com.foodshare.util.Resource
+import com.foodshare.util.loadCircleImage
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
@@ -142,15 +142,7 @@ class ProfileFragment : Fragment() {
         tvPostsCount.text = (user.postsCount ?: 0).toString()
         tvLikesCount.text = (user.likesReceived ?: 0).toString()
 
-        user.avatar?.let { avatar ->
-            Glide.with(this)
-                .load(avatar)
-                .placeholder(R.drawable.ic_profile_placeholder)
-                .circleCrop()
-                .into(ivProfileImage)
-        } ?: run {
-            ivProfileImage.setImageResource(R.drawable.ic_profile_placeholder)
-        }
+        ivProfileImage.loadCircleImage(user.profileImage)
     }
 
     override fun onResume() {
