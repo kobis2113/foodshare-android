@@ -58,7 +58,8 @@ class PostViewModel @Inject constructor(
                     return@launch
                 }
 
-                val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
+                val mimeType = getMimeType(file.name)
+                val requestFile = file.asRequestBody(mimeType.toMediaTypeOrNull())
                 val imagePart = MultipartBody.Part.createFormData("image", file.name, requestFile)
                 val mealNameBody = mealName.toRequestBody("text/plain".toMediaTypeOrNull())
                 val descriptionBody = description?.toRequestBody("text/plain".toMediaTypeOrNull())
@@ -88,7 +89,8 @@ class PostViewModel @Inject constructor(
                 imageUri?.let { uri ->
                     val file = getFileFromUri(context, uri)
                     if (file != null) {
-                        val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
+                        val mimeType = getMimeType(file.name)
+                        val requestFile = file.asRequestBody(mimeType.toMediaTypeOrNull())
                         imagePart = MultipartBody.Part.createFormData("image", file.name, requestFile)
                     }
                 }
@@ -102,6 +104,17 @@ class PostViewModel @Inject constructor(
             } catch (e: Exception) {
                 _updatePostResult.value = Resource.Error(e.message ?: "Failed to update post")
             }
+        }
+    }
+
+    private fun getMimeType(fileName: String): String {
+        val extension = fileName.substringAfterLast('.', "").lowercase()
+        return when (extension) {
+            "jpg", "jpeg" -> "image/jpeg"
+            "png" -> "image/png"
+            "gif" -> "image/gif"
+            "webp" -> "image/webp"
+            else -> "image/jpeg"
         }
     }
 
