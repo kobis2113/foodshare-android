@@ -63,8 +63,8 @@ dependencies {
     implementation("androidx.navigation:navigation-ui-ktx:2.7.5")
 
     // Hilt
-    implementation("com.google.dagger:hilt-android:2.48")
-    kapt("com.google.dagger:hilt-android-compiler:2.48")
+    implementation("com.google.dagger:hilt-android:2.50")
+    kapt("com.google.dagger:hilt-android-compiler:2.50")
 
     // Firebase
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
@@ -100,4 +100,9 @@ dependencies {
 
 kapt {
     correctErrorTypes = true
+    useBuildCache = true
+    javacOptions {
+        option("-source", "17")
+        option("-target", "17")
+    }
 }
