@@ -67,7 +67,7 @@ dependencies {
     kapt("com.google.dagger:hilt-android-compiler:2.48")
 
     // Firebase
-    implementation(platform("com.google.firebase:firebase-bom:32.6.0"))
+    implementation(platform("com.google.firebase:firebase-bom:34.10.0"))
     implementation("com.google.firebase:firebase-auth-ktx")
 
     // Retrofit
