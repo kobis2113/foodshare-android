@@ -1,0 +1,34 @@
+# Android
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build/
+/captures/
+.externalNativeBuild/
+.cxx/
+local.properties
+*.hprof
+
+# Kotlin
+*.kotlin_metadata
+
+# App build
+/app/build/
+/app/release/
+
+# IDE
+.idea/
+*.iml
+
+# Google Services
+google-services.json
+
+# Signing
+*.jks
+*.keystore
+keystore.properties
+
+# Logs
+*.log
