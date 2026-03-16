@@ -26,7 +26,16 @@ class UserRepository @Inject constructor(
         try {
             val response = api.getMyProfile()
             if (response.isSuccessful && response.body() != null) {
-                val user = response.body()!!
+                val profile = response.body()!!
+                val user = User(
+                    id = profile.id,
+                    email = profile.email,
+                    displayName = profile.displayName,
+                    profileImage = profile.profileImage,
+                    createdAt = profile.createdAt,
+                    postsCount = profile.stats?.posts ?: 0,
+                    likesReceived = profile.stats?.likes ?: 0
+                )
                 userDao.insertUser(user)
                 emit(Resource.Success(user))
             } else {
@@ -45,13 +54,14 @@ class UserRepository @Inject constructor(
         try {
             val displayNameBody = displayName?.toRequestBody("text/plain".toMediaTypeOrNull())
             val imagePart = profileImageFile?.let {
-                val imageBody = it.asRequestBody("image/*".toMediaTypeOrNull())
+                val mimeType = getMimeType(it.name)
+                val imageBody = it.asRequestBody(mimeType.toMediaTypeOrNull())
                 MultipartBody.Part.createFormData("profileImage", it.name, imageBody)
             }
 
             val response = api.updateProfile(displayNameBody, imagePart)
-            if (response.isSuccessful && response.body() != null) {
-                val user = response.body()!!
+            if (response.isSuccessful && response.body()?.user != null) {
+                val user = response.body()!!.user
                 userDao.insertUser(user)
                 emit(Resource.Success(user))
             } else {
@@ -62,12 +72,23 @@ class UserRepository @Inject constructor(
         }
     }
 
+    private fun getMimeType(fileName: String): String {
+        val extension = fileName.substringAfterLast('.', "").lowercase()
+        return when (extension) {
+            "jpg", "jpeg" -> "image/jpeg"
+            "png" -> "image/png"
+            "gif" -> "image/gif"
+            "webp" -> "image/webp"
+            else -> "image/jpeg"
+        }
+    }
+
     suspend fun getMyPosts(): Flow<Resource<List<Post>>> = flow {
         emit(Resource.Loading())
         try {
             val response = api.getMyPosts()
             if (response.isSuccessful && response.body() != null) {
-                emit(Resource.Success(response.body()!!))
+                emit(Resource.Success(response.body()!!.posts))
             } else {
                 emit(Resource.Error(response.message() ?: "Failed to load posts"))
             }
@@ -81,7 +102,7 @@ class UserRepository @Inject constructor(
         try {
             val response = api.getLikedPosts()
             if (response.isSuccessful && response.body() != null) {
-                emit(Resource.Success(response.body()!!))
+                emit(Resource.Success(response.body()!!.posts))
             } else {
                 emit(Resource.Error(response.message() ?: "Failed to load liked posts"))
             }
@@ -100,8 +121,8 @@ class UserRepository @Inject constructor(
         emit(Resource.Loading())
         try {
             val response = api.updateProfile(displayNameBody, imagePart)
-            if (response.isSuccessful && response.body() != null) {
-                val user = response.body()!!
+            if (response.isSuccessful && response.body()?.user != null) {
+                val user = response.body()!!.user
                 userDao.insertUser(user)
                 emit(Resource.Success(user))
             } else {

@@ -33,6 +33,34 @@ data class CommentsResponse(
     val comments: List<Comment>
 )
 
+data class UserPostsResponse(
+    val posts: List<Post>
+)
+
+data class CommentResponse(
+    val message: String? = null,
+    val comment: Comment
+)
+
+data class UserProfileResponse(
+    val id: String,
+    val email: String,
+    val displayName: String,
+    val profileImage: String? = null,
+    val stats: UserStats? = null,
+    val createdAt: String? = null
+)
+
+data class UserStats(
+    val posts: Int = 0,
+    val likes: Int = 0
+)
+
+data class UpdateProfileResponse(
+    val message: String? = null,
+    val user: User
+)
+
 data class NutritionResponse(
     val calories: Int?,
     val protein: Double?,
