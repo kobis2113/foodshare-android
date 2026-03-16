@@ -57,7 +57,7 @@ interface FoodShareApi {
 
     // Comments
     @GET("api/posts/{id}/comments")
-    suspend fun getComments(@Path("id") postId: String): Response<List<Comment>>
+    suspend fun getComments(@Path("id") postId: String): Response<CommentsResponse>
 
     @FormUrlEncoded
     @POST("api/posts/{id}/comments")

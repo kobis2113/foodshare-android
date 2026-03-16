@@ -156,7 +156,7 @@ class PostRepository @Inject constructor(
         try {
             val response = api.getComments(postId)
             if (response.isSuccessful && response.body() != null) {
-                emit(Resource.Success(response.body()!!))
+                emit(Resource.Success(response.body()!!.comments))
             } else {
                 emit(Resource.Error(response.message() ?: "Failed to load comments"))
             }

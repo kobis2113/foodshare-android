@@ -29,6 +29,10 @@ data class PostResponse(
     val post: Post
 )
 
+data class CommentsResponse(
+    val comments: List<Comment>
+)
+
 data class NutritionResponse(
     val calories: Int?,
     val protein: Double?,
