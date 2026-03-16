@@ -76,7 +76,8 @@ class PostRepository @Inject constructor(
         try {
             val mealNameBody = mealName.toRequestBody("text/plain".toMediaTypeOrNull())
             val descriptionBody = description?.toRequestBody("text/plain".toMediaTypeOrNull())
-            val imageBody = imageFile.asRequestBody("image/*".toMediaTypeOrNull())
+            val mimeType = getMimeType(imageFile.name)
+            val imageBody = imageFile.asRequestBody(mimeType.toMediaTypeOrNull())
             val imagePart = MultipartBody.Part.createFormData("image", imageFile.name, imageBody)
 
             val response = api.createPost(mealNameBody, descriptionBody, imagePart)
@@ -103,7 +104,8 @@ class PostRepository @Inject constructor(
             val mealNameBody = mealName.toRequestBody("text/plain".toMediaTypeOrNull())
             val descriptionBody = description?.toRequestBody("text/plain".toMediaTypeOrNull())
             val imagePart = imageFile?.let {
-                val imageBody = it.asRequestBody("image/*".toMediaTypeOrNull())
+                val mimeType = getMimeType(it.name)
+                val imageBody = it.asRequestBody(mimeType.toMediaTypeOrNull())
                 MultipartBody.Part.createFormData("image", it.name, imageBody)
             }
 
@@ -178,6 +180,17 @@ class PostRepository @Inject constructor(
     }
 
     fun getCachedPosts(): Flow<List<Post>> = postDao.getAllPosts()
+
+    private fun getMimeType(fileName: String): String {
+        val extension = fileName.substringAfterLast('.', "").lowercase()
+        return when (extension) {
+            "jpg", "jpeg" -> "image/jpeg"
+            "png" -> "image/png"
+            "gif" -> "image/gif"
+            "webp" -> "image/webp"
+            else -> "image/jpeg" // Default to JPEG
+        }
+    }
 
     // Overloaded createPost with pre-prepared parts
     suspend fun createPost(
