@@ -38,7 +38,7 @@ interface FoodShareApi {
         @Part("mealName") mealName: RequestBody,
         @Part("description") description: RequestBody?,
         @Part image: MultipartBody.Part
-    ): Response<Post>
+    ): Response<PostResponse>
 
     @Multipart
     @PUT("api/posts/{id}")
@@ -47,7 +47,7 @@ interface FoodShareApi {
         @Part("mealName") mealName: RequestBody,
         @Part("description") description: RequestBody?,
         @Part image: MultipartBody.Part?
-    ): Response<Post>
+    ): Response<PostResponse>
 
     @DELETE("api/posts/{id}")
     suspend fun deletePost(@Path("id") postId: String): Response<MessageResponse>

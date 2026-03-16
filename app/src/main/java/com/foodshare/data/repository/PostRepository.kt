@@ -81,8 +81,8 @@ class PostRepository @Inject constructor(
             val imagePart = MultipartBody.Part.createFormData("image", imageFile.name, imageBody)
 
             val response = api.createPost(mealNameBody, descriptionBody, imagePart)
-            if (response.isSuccessful && response.body() != null) {
-                val post = response.body()!!
+            if (response.isSuccessful && response.body()?.post != null) {
+                val post = response.body()!!.post
                 postDao.insertPost(post)
                 emit(Resource.Success(post))
             } else {
@@ -110,8 +110,8 @@ class PostRepository @Inject constructor(
             }
 
             val response = api.updatePost(postId, mealNameBody, descriptionBody, imagePart)
-            if (response.isSuccessful && response.body() != null) {
-                val post = response.body()!!
+            if (response.isSuccessful && response.body()?.post != null) {
+                val post = response.body()!!.post
                 postDao.insertPost(post)
                 emit(Resource.Success(post))
             } else {
@@ -201,8 +201,8 @@ class PostRepository @Inject constructor(
         emit(Resource.Loading())
         try {
             val response = api.createPost(mealNameBody, descriptionBody, imagePart)
-            if (response.isSuccessful && response.body() != null) {
-                val post = response.body()!!
+            if (response.isSuccessful && response.body()?.post != null) {
+                val post = response.body()!!.post
                 postDao.insertPost(post)
                 emit(Resource.Success(post))
             } else {
@@ -223,8 +223,8 @@ class PostRepository @Inject constructor(
         emit(Resource.Loading())
         try {
             val response = api.updatePost(postId, mealNameBody, descriptionBody, imagePart)
-            if (response.isSuccessful && response.body() != null) {
-                val post = response.body()!!
+            if (response.isSuccessful && response.body()?.post != null) {
+                val post = response.body()!!.post
                 postDao.insertPost(post)
                 emit(Resource.Success(post))
             } else {

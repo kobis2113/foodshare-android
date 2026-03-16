@@ -24,6 +24,11 @@ data class LikeResponse(
     val likesCount: Int
 )
 
+data class PostResponse(
+    val message: String? = null,
+    val post: Post
+)
+
 data class NutritionResponse(
     val calories: Int?,
     val protein: Double?,
