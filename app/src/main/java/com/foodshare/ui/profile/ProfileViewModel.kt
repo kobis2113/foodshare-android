@@ -61,7 +61,8 @@ class ProfileViewModel @Inject constructor(
                 avatarUri?.let { uri ->
                     val file = getFileFromUri(context, uri)
                     if (file != null) {
-                        val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
+                        val mimeType = getMimeType(file.name)
+                        val requestFile = file.asRequestBody(mimeType.toMediaTypeOrNull())
                         imagePart = MultipartBody.Part.createFormData("profileImage", file.name, requestFile)
                     }
                 }
@@ -76,6 +77,17 @@ class ProfileViewModel @Inject constructor(
             } catch (e: Exception) {
                 _updateResult.value = Resource.Error(e.message ?: "Failed to update profile")
             }
+        }
+    }
+
+    private fun getMimeType(fileName: String): String {
+        val extension = fileName.substringAfterLast('.', "").lowercase()
+        return when (extension) {
+            "jpg", "jpeg" -> "image/jpeg"
+            "png" -> "image/png"
+            "gif" -> "image/gif"
+            "webp" -> "image/webp"
+            else -> "image/jpeg"
         }
     }
 
