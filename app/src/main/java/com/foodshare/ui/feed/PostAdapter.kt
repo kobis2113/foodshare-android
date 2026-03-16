@@ -37,21 +37,21 @@ class PostAdapter(
 
         init {
             binding.root.setOnClickListener {
-                val position = bindingAdapterPosition
+                val position = adapterPosition
                 if (position != RecyclerView.NO_POSITION) {
                     onPostClick(getItem(position))
                 }
             }
 
             binding.btnLike.setOnClickListener {
-                val position = bindingAdapterPosition
+                val position = adapterPosition
                 if (position != RecyclerView.NO_POSITION) {
                     onLikeClick(getItem(position), position)
                 }
             }
 
             binding.btnComment.setOnClickListener {
-                val position = bindingAdapterPosition
+                val position = adapterPosition
                 if (position != RecyclerView.NO_POSITION) {
                     onCommentClick(getItem(position))
                 }
