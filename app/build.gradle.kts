@@ -8,6 +8,25 @@ plugins {
     id("kotlin-parcelize")
 }
 
+// Load API base URL from .env (project root); fallback if missing
+fun loadEnvBaseUrl(): String {
+    val envFile = rootProject.file(".env")
+    if (!envFile.exists()) return "http://10.0.2.2:3000/"
+    return envFile.readLines()
+        .asSequence()
+        .map { it.trim() }
+        .filter { it.isNotEmpty() && !it.startsWith("#") }
+        .mapNotNull { line ->
+            val eq = line.indexOf('=')
+            if (eq <= 0) null else line.substring(0, eq).trim() to line.substring(eq + 1).trim().trim('"')
+        }
+        .firstOrNull { (k, _) -> k == "API_BASE_URL" }
+        ?.second
+        ?.takeIf { it.isNotEmpty() }
+        ?.let { if (it.endsWith("/")) it else "$it/" }
+        ?: "http://10.0.2.2:3000/"
+}
+
 android {
     namespace = "com.foodshare"
     compileSdk = 34
@@ -21,7 +40,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:3000/\"")
+        buildConfigField("String", "BASE_URL", "\"${loadEnvBaseUrl()}\"")
     }
 
     buildTypes {

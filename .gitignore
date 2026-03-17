@@ -30,5 +30,8 @@ google-services.json
 *.keystore
 keystore.properties
 
+# Environment (local API host, etc.)
+.env
+
 # Logs
 *.log
