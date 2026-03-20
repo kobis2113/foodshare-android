@@ -8,8 +8,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.foodshare.databinding.ActivitySplashBinding
 import com.foodshare.ui.MainActivity
+import com.foodshare.util.Resource
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @SuppressLint("CustomSplashScreen")
@@ -32,9 +34,26 @@ class SplashActivity : AppCompatActivity() {
 
     private fun checkAuthState() {
         if (viewModel.isLoggedIn()) {
-            navigateToMain()
+            // Sync user data with backend to ensure cached data is up-to-date
+            syncAndNavigate()
         } else {
             navigateToAuth()
+        }
+    }
+
+    private fun syncAndNavigate() {
+        lifecycleScope.launch {
+            viewModel.syncUser().collectLatest { result ->
+                when (result) {
+                    is Resource.Loading -> {
+                        // Show loading indicator if needed
+                    }
+                    is Resource.Success, is Resource.Error -> {
+                        // Navigate regardless of sync result (user is still logged in)
+                        navigateToMain()
+                    }
+                }
+            }
         }
     }
 

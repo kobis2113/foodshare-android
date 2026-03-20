@@ -4,18 +4,30 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.foodshare.R
+import com.foodshare.data.model.Post
+import com.foodshare.data.repository.AuthRepository
 import com.foodshare.databinding.FragmentFeedBinding
 import com.foodshare.util.Resource
+import com.foodshare.util.getFullImageUrl
 import com.foodshare.util.gone
 import com.foodshare.util.toast
 import com.foodshare.util.visible
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class FeedFragment : Fragment() {
@@ -25,6 +37,11 @@ class FeedFragment : Fragment() {
 
     private val viewModel: FeedViewModel by viewModels()
     private lateinit var postAdapter: PostAdapter
+
+    @Inject
+    lateinit var authRepository: AuthRepository
+
+    private var currentUserId: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -37,6 +54,13 @@ class FeedFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // Load current user ID asynchronously
+        viewLifecycleOwner.lifecycleScope.launch {
+            val user = authRepository.getCachedUser().first()
+            currentUserId = user?.id
+        }
+
         setupRecyclerView()
         setupSwipeRefresh()
         setupFab()
@@ -55,6 +79,15 @@ class FeedFragment : Fragment() {
             onCommentClick = { post ->
                 val action = FeedFragmentDirections.actionFeedFragmentToPostDetailFragment(post.id)
                 findNavController().navigate(action)
+            },
+            onProfileClick = { post ->
+                if (post.author.id == currentUserId) {
+                    // Navigate to profile tab
+                    findNavController().navigate(R.id.profileFragment)
+                } else {
+                    // Show user info dialog for other users
+                    showUserProfileDialog(post)
+                }
             }
         )
 
@@ -139,5 +172,31 @@ class FeedFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    private fun showUserProfileDialog(post: Post) {
+        val dialog = BottomSheetDialog(requireContext())
+        val dialogView = layoutInflater.inflate(R.layout.dialog_user_profile, null)
+        dialog.setContentView(dialogView)
+
+        val ivProfileImage = dialogView.findViewById<ImageView>(R.id.ivProfileImage)
+        val tvDisplayName = dialogView.findViewById<TextView>(R.id.tvDisplayName)
+        val tvPostInfo = dialogView.findViewById<TextView>(R.id.tvPostInfo)
+
+        tvDisplayName.text = post.author.displayName
+        tvPostInfo.text = "Author of: ${post.mealName}"
+
+        post.author.profileImage?.let { profileImage ->
+            val fullUrl = getFullImageUrl(profileImage)
+            Glide.with(this)
+                .load(fullUrl)
+                .placeholder(R.drawable.ic_profile_placeholder)
+                .circleCrop()
+                .into(ivProfileImage)
+        } ?: run {
+            ivProfileImage.setImageResource(R.drawable.ic_profile_placeholder)
+        }
+
+        dialog.show()
     }
 }

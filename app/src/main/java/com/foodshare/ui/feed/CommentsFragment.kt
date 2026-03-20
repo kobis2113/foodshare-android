@@ -11,21 +11,30 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.foodshare.R
+import com.foodshare.data.repository.AuthRepository
 import com.foodshare.util.Resource
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class CommentsFragment : Fragment() {
 
     private val viewModel: CommentsViewModel by viewModels()
     private val args: CommentsFragmentArgs by navArgs()
-    private lateinit var commentAdapter: CommentAdapter
+    private var commentAdapter: CommentAdapter? = null
+
+    @Inject
+    lateinit var authRepository: AuthRepository
 
     private lateinit var ivBackButton: ImageButton
     private lateinit var tvTitle: TextView
@@ -34,6 +43,8 @@ class CommentsFragment : Fragment() {
     private lateinit var tvEmpty: TextView
     private lateinit var etComment: EditText
     private lateinit var btnSend: MaterialButton
+
+    private var currentUserId: String? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -47,11 +58,16 @@ class CommentsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         initViews(view)
-        setupRecyclerView()
         setupClickListeners()
         observeViewModel()
 
-        viewModel.loadComments(args.postId)
+        // Load current user ID asynchronously, then setup RecyclerView
+        viewLifecycleOwner.lifecycleScope.launch {
+            val user = authRepository.getCachedUser().first()
+            currentUserId = user?.id
+            setupRecyclerView()
+            viewModel.loadComments(args.postId)
+        }
     }
 
     private fun initViews(view: View) {
@@ -65,11 +81,27 @@ class CommentsFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        commentAdapter = CommentAdapter()
+        commentAdapter = CommentAdapter(
+            currentUserId = currentUserId,
+            onDeleteClick = { comment ->
+                showDeleteConfirmation(comment.id)
+            }
+        )
         rvComments.apply {
             adapter = commentAdapter
             layoutManager = LinearLayoutManager(context)
         }
+    }
+
+    private fun showDeleteConfirmation(commentId: String) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Delete Comment")
+            .setMessage("Are you sure you want to delete this comment?")
+            .setPositiveButton("Delete") { _, _ ->
+                viewModel.deleteComment(args.postId, commentId)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun setupClickListeners() {
@@ -101,7 +133,7 @@ class CommentsFragment : Fragment() {
                     } else {
                         tvEmpty.visibility = View.GONE
                         rvComments.visibility = View.VISIBLE
-                        commentAdapter.submitList(comments)
+                        commentAdapter?.submitList(comments)
                     }
                 }
                 is Resource.Error -> {
@@ -124,6 +156,23 @@ class CommentsFragment : Fragment() {
                 }
                 is Resource.Error -> {
                     btnSend.isEnabled = true
+                    Toast.makeText(context, resource.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        viewModel.deleteCommentResult.observe(viewLifecycleOwner) { resource ->
+            when (resource) {
+                is Resource.Loading -> {
+                    progressBar.visibility = View.VISIBLE
+                }
+                is Resource.Success -> {
+                    progressBar.visibility = View.GONE
+                    Toast.makeText(context, "Comment deleted", Toast.LENGTH_SHORT).show()
+                    viewModel.loadComments(args.postId)
+                }
+                is Resource.Error -> {
+                    progressBar.visibility = View.GONE
                     Toast.makeText(context, resource.message, Toast.LENGTH_SHORT).show()
                 }
             }

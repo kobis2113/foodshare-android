@@ -31,6 +31,8 @@ class AuthRepository @Inject constructor(
             val response = api.syncFirebaseUser()
             if (response.isSuccessful && response.body()?.user != null) {
                 val user = response.body()!!.user
+                // Clear old user data and insert fresh data
+                userDao.clearAllUsers()
                 userDao.insertUser(user)
                 emit(Resource.Success(user))
             } else {
@@ -59,6 +61,8 @@ class AuthRepository @Inject constructor(
             val response = api.syncFirebaseUser()
             if (response.isSuccessful && response.body()?.user != null) {
                 val user = response.body()!!.user
+                // Clear old user data and insert fresh data
+                userDao.clearAllUsers()
                 userDao.insertUser(user)
                 emit(Resource.Success(user))
             } else {
@@ -75,6 +79,9 @@ class AuthRepository @Inject constructor(
             val response = api.syncFirebaseUser()
             if (response.isSuccessful && response.body()?.user != null) {
                 val user = response.body()!!.user
+                // Clear any old cached user data before inserting new user
+                // This ensures we don't have stale data with different IDs
+                userDao.clearAllUsers()
                 userDao.insertUser(user)
                 emit(Resource.Success(user))
             } else {
@@ -85,9 +92,13 @@ class AuthRepository @Inject constructor(
         }
     }
 
-    fun logout() {
+    suspend fun logout() {
+        // Clear cached user data
+        userDao.clearAllUsers()
         firebaseAuth.signOut()
     }
 
     fun getCachedUser(): Flow<User?> = userDao.getCurrentUser()
+
+    fun getCurrentUserId(): String? = userDao.getCurrentUserIdSync()
 }

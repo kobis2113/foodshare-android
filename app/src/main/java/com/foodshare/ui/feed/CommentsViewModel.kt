@@ -23,6 +23,9 @@ class CommentsViewModel @Inject constructor(
     private val _addCommentResult = MutableLiveData<Resource<Comment>>()
     val addCommentResult: LiveData<Resource<Comment>> = _addCommentResult
 
+    private val _deleteCommentResult = MutableLiveData<Resource<Unit>>()
+    val deleteCommentResult: LiveData<Resource<Unit>> = _deleteCommentResult
+
     fun loadComments(postId: String) {
         viewModelScope.launch {
             postRepository.getComments(postId).collectLatest { result ->
@@ -35,6 +38,14 @@ class CommentsViewModel @Inject constructor(
         viewModelScope.launch {
             postRepository.addComment(postId, content).collectLatest { result ->
                 _addCommentResult.value = result
+            }
+        }
+    }
+
+    fun deleteComment(postId: String, commentId: String) {
+        viewModelScope.launch {
+            postRepository.deleteComment(postId, commentId).collectLatest { result ->
+                _deleteCommentResult.value = result
             }
         }
     }

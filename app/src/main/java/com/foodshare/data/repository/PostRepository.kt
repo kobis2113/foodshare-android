@@ -3,6 +3,7 @@ package com.foodshare.data.repository
 import com.foodshare.data.api.FoodShareApi
 import com.foodshare.data.local.PostDao
 import com.foodshare.data.model.*
+import com.foodshare.data.model.LikeUser
 import com.foodshare.util.Resource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -180,6 +181,34 @@ class PostRepository @Inject constructor(
             }
         } catch (e: Exception) {
             emit(Resource.Error(e.message ?: "Failed to add comment"))
+        }
+    }
+
+    suspend fun deleteComment(postId: String, commentId: String): Flow<Resource<Unit>> = flow {
+        emit(Resource.Loading())
+        try {
+            val response = api.deleteComment(postId, commentId)
+            if (response.isSuccessful) {
+                emit(Resource.Success(Unit))
+            } else {
+                emit(Resource.Error(response.message() ?: "Failed to delete comment"))
+            }
+        } catch (e: Exception) {
+            emit(Resource.Error(e.message ?: "Failed to delete comment"))
+        }
+    }
+
+    suspend fun getPostLikes(postId: String): Flow<Resource<List<LikeUser>>> = flow {
+        emit(Resource.Loading())
+        try {
+            val response = api.getPostLikes(postId)
+            if (response.isSuccessful && response.body() != null) {
+                emit(Resource.Success(response.body()!!.users))
+            } else {
+                emit(Resource.Error(response.message() ?: "Failed to get likes"))
+            }
+        } catch (e: Exception) {
+            emit(Resource.Error(e.message ?: "Failed to get likes"))
         }
     }
 

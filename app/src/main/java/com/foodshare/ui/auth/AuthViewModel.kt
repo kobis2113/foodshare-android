@@ -8,6 +8,7 @@ import com.foodshare.data.model.User
 import com.foodshare.data.repository.AuthRepository
 import com.foodshare.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -42,6 +43,12 @@ class AuthViewModel @Inject constructor(
     }
 
     fun logout() {
-        authRepository.logout()
+        viewModelScope.launch {
+            authRepository.logout()
+        }
+    }
+
+    suspend fun syncUser(): Flow<Resource<User>> {
+        return authRepository.syncUser()
     }
 }
