@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <ImageView
+        android:id="@+id/ivProfileImage"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:contentDescription="Profile"
+        tools:src="@drawable/ic_profile_placeholder" />
+
+    <TextView
+        android:id="@+id/tvDisplayName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:textColor="@color/text_primary"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        tools:text="John Doe" />
+
+    <TextView
+        android:id="@+id/tvPostInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textColor="@color/text_secondary"
+        android:textSize="14sp"
+        tools:text="Author of: Grilled Chicken Salad" />
+</LinearLayout>

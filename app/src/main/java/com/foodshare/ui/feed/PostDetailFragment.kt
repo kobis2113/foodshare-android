@@ -12,22 +12,37 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.foodshare.R
+import com.foodshare.data.model.LikeUser
 import com.foodshare.data.model.Post
 import com.foodshare.util.Resource
 import com.foodshare.util.loadCircleImage
 import com.foodshare.util.loadImage
+import com.foodshare.data.repository.AuthRepository
+import com.foodshare.util.getFullImageUrl
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class PostDetailFragment : Fragment() {
 
     private val viewModel: PostDetailViewModel by viewModels()
     private val args: PostDetailFragmentArgs by navArgs()
+
+    @Inject
+    lateinit var authRepository: AuthRepository
+
+    private var currentUserId: String? = null
 
     private lateinit var progressBar: ProgressBar
     private lateinit var contentLayout: LinearLayout
@@ -48,6 +63,10 @@ class PostDetailFragment : Fragment() {
     private lateinit var tvCarbs: TextView
     private lateinit var tvFat: TextView
     private lateinit var tvNutritionTip: TextView
+    private lateinit var btnGetNutrition: MaterialButton
+
+    private var currentMealName: String? = null
+    private var currentPost: Post? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -63,6 +82,12 @@ class PostDetailFragment : Fragment() {
         initViews(view)
         setupClickListeners()
         observeViewModel()
+
+        // Load current user ID
+        viewLifecycleOwner.lifecycleScope.launch {
+            val user = authRepository.getCachedUser().first()
+            currentUserId = user?.id
+        }
 
         viewModel.loadPost(args.postId)
     }
@@ -87,6 +112,7 @@ class PostDetailFragment : Fragment() {
         tvCarbs = view.findViewById(R.id.tvCarbs)
         tvFat = view.findViewById(R.id.tvFat)
         tvNutritionTip = view.findViewById(R.id.tvNutritionTip)
+        btnGetNutrition = view.findViewById(R.id.btnGetNutrition)
     }
 
     private fun setupClickListeners() {
@@ -103,6 +129,62 @@ class PostDetailFragment : Fragment() {
                 .actionPostDetailFragmentToCommentsFragment(args.postId)
             findNavController().navigate(action)
         }
+
+        btnGetNutrition.setOnClickListener {
+            currentMealName?.let { mealName ->
+                viewModel.loadNutrition(mealName)
+            }
+        }
+
+        tvLikesCount.setOnClickListener {
+            viewModel.loadLikesUsers()
+        }
+
+        // Profile click handlers
+        ivProfileImage.setOnClickListener {
+            handleProfileClick()
+        }
+
+        tvAuthorName.setOnClickListener {
+            handleProfileClick()
+        }
+    }
+
+    private fun handleProfileClick() {
+        val post = currentPost ?: return
+        if (post.author.id == currentUserId) {
+            // Navigate to profile tab
+            findNavController().navigate(R.id.profileFragment)
+        } else {
+            // Show user info dialog
+            showUserProfileDialog(post)
+        }
+    }
+
+    private fun showUserProfileDialog(post: Post) {
+        val dialog = BottomSheetDialog(requireContext())
+        val dialogView = layoutInflater.inflate(R.layout.dialog_user_profile, null)
+        dialog.setContentView(dialogView)
+
+        val ivProfile = dialogView.findViewById<ImageView>(R.id.ivProfileImage)
+        val tvName = dialogView.findViewById<TextView>(R.id.tvDisplayName)
+        val tvInfo = dialogView.findViewById<TextView>(R.id.tvPostInfo)
+
+        tvName.text = post.author.displayName
+        tvInfo.text = "Author of: ${post.mealName}"
+
+        post.author.profileImage?.let { profileImage ->
+            val fullUrl = getFullImageUrl(profileImage)
+            com.bumptech.glide.Glide.with(this)
+                .load(fullUrl)
+                .placeholder(R.drawable.ic_profile_placeholder)
+                .circleCrop()
+                .into(ivProfile)
+        } ?: run {
+            ivProfile.setImageResource(R.drawable.ic_profile_placeholder)
+        }
+
+        dialog.show()
     }
 
     private fun observeViewModel() {
@@ -132,9 +214,50 @@ class PostDetailFragment : Fragment() {
                 else -> { /* Loading and Success handled by post update */ }
             }
         }
+
+        viewModel.nutritionResult.observe(viewLifecycleOwner) { resource ->
+            when (resource) {
+                is Resource.Loading -> {
+                    btnGetNutrition.isEnabled = false
+                    btnGetNutrition.text = "Loading..."
+                }
+                is Resource.Success -> {
+                    btnGetNutrition.visibility = View.GONE
+                    // Nutrition card will be updated via post observer
+                }
+                is Resource.Error -> {
+                    btnGetNutrition.isEnabled = true
+                    btnGetNutrition.text = "Get AI Nutrition Tips"
+                    Toast.makeText(context, resource.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        viewModel.likesUsers.observe(viewLifecycleOwner) { resource ->
+            if (resource == null) return@observe
+            when (resource) {
+                is Resource.Loading -> {
+                    // Could show a loading indicator
+                }
+                is Resource.Success -> {
+                    resource.data?.let { users ->
+                        showLikesDialog(users)
+                        viewModel.clearLikesUsers()
+                    }
+                }
+                is Resource.Error -> {
+                    Toast.makeText(context, resource.message, Toast.LENGTH_SHORT).show()
+                    viewModel.clearLikesUsers()
+                }
+            }
+        }
     }
 
     private fun bindPost(post: Post) {
+        // Store post and meal name for later use
+        currentPost = post
+        currentMealName = post.mealName
+
         // Load images using extension functions that handle base URL
         ivPostImage.loadImage(post.image)
         ivProfileImage.loadCircleImage(post.author.profileImage)
@@ -153,10 +276,11 @@ class PostDetailFragment : Fragment() {
         // Nutrition info
         post.nutrition?.let { nutrition ->
             nutritionCard.visibility = View.VISIBLE
+            btnGetNutrition.visibility = View.GONE
             tvCalories.text = "${nutrition.calories ?: 0} kcal"
-            tvProtein.text = "${nutrition.protein ?: 0}g"
-            tvCarbs.text = "${nutrition.carbs ?: 0}g"
-            tvFat.text = "${nutrition.fat ?: 0}g"
+            tvProtein.text = "${String.format("%.1f", nutrition.protein ?: 0.0)}g"
+            tvCarbs.text = "${String.format("%.1f", nutrition.carbs ?: 0.0)}g"
+            tvFat.text = "${String.format("%.1f", nutrition.fat ?: 0.0)}g"
             if (!nutrition.healthTips.isNullOrEmpty()) {
                 tvNutritionTip.visibility = View.VISIBLE
                 tvNutritionTip.text = nutrition.healthTips.joinToString("\n• ", "• ")
@@ -165,6 +289,9 @@ class PostDetailFragment : Fragment() {
             }
         } ?: run {
             nutritionCard.visibility = View.GONE
+            btnGetNutrition.visibility = View.VISIBLE
+            btnGetNutrition.isEnabled = true
+            btnGetNutrition.text = "Get AI Nutrition Tips"
         }
     }
 
@@ -196,5 +323,27 @@ class PostDetailFragment : Fragment() {
         } catch (e: Exception) {
             timestamp
         }
+    }
+
+    private fun showLikesDialog(users: List<LikeUser>) {
+        if (users.isEmpty()) {
+            Toast.makeText(context, "No likes yet", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val dialog = BottomSheetDialog(requireContext())
+        val dialogView = layoutInflater.inflate(R.layout.dialog_likes, null)
+        dialog.setContentView(dialogView)
+
+        val tvTitle = dialogView.findViewById<TextView>(R.id.tvTitle)
+        val rvLikes = dialogView.findViewById<RecyclerView>(R.id.rvLikes)
+
+        tvTitle.text = "Liked by ${users.size} ${if (users.size == 1) "person" else "people"}"
+
+        val adapter = LikesAdapter(users)
+        rvLikes.layoutManager = LinearLayoutManager(context)
+        rvLikes.adapter = adapter
+
+        dialog.show()
     }
 }

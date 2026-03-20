@@ -15,7 +15,8 @@ import com.foodshare.util.toRelativeTime
 class PostAdapter(
     private val onPostClick: (Post) -> Unit,
     private val onLikeClick: (Post, Int) -> Unit,
-    private val onCommentClick: (Post) -> Unit
+    private val onCommentClick: (Post) -> Unit,
+    private val onProfileClick: ((Post) -> Unit)? = null
 ) : ListAdapter<Post, PostAdapter.PostViewHolder>(PostDiffCallback()) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostViewHolder {
@@ -54,6 +55,21 @@ class PostAdapter(
                 val position = adapterPosition
                 if (position != RecyclerView.NO_POSITION) {
                     onCommentClick(getItem(position))
+                }
+            }
+
+            // Profile click listeners
+            binding.ivProfileImage.setOnClickListener {
+                val position = adapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    onProfileClick?.invoke(getItem(position))
+                }
+            }
+
+            binding.tvAuthorName.setOnClickListener {
+                val position = adapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    onProfileClick?.invoke(getItem(position))
                 }
             }
         }

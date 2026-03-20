@@ -72,6 +72,16 @@ data class NutritionResponse(
     val tips: String?
 )
 
+data class LikesResponse(
+    val users: List<LikeUser>
+)
+
+data class LikeUser(
+    val _id: String,
+    val displayName: String,
+    val profileImage: String?
+)
+
 data class MessageResponse(
     val message: String
 )

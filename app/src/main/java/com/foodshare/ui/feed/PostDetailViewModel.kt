@@ -4,6 +4,9 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.foodshare.data.model.LikeUser
+import com.foodshare.data.model.Nutrition
+import com.foodshare.data.model.NutritionResponse
 import com.foodshare.data.model.Post
 import com.foodshare.data.repository.PostRepository
 import com.foodshare.util.Resource
@@ -22,6 +25,12 @@ class PostDetailViewModel @Inject constructor(
 
     private val _likeResult = MutableLiveData<Resource<Unit>>()
     val likeResult: LiveData<Resource<Unit>> = _likeResult
+
+    private val _nutritionResult = MutableLiveData<Resource<NutritionResponse>>()
+    val nutritionResult: LiveData<Resource<NutritionResponse>> = _nutritionResult
+
+    private val _likesUsers = MutableLiveData<Resource<List<LikeUser>>?>()
+    val likesUsers: LiveData<Resource<List<LikeUser>>?> = _likesUsers
 
     private var currentPostId: String? = null
 
@@ -70,5 +79,44 @@ class PostDetailViewModel @Inject constructor(
 
     fun refreshPost() {
         currentPostId?.let { loadPost(it) }
+    }
+
+    fun loadNutrition(mealName: String) {
+        viewModelScope.launch {
+            postRepository.getNutritionData(mealName).collectLatest { result ->
+                _nutritionResult.value = result
+
+                // Update post with nutrition data on success
+                if (result is Resource.Success && result.data != null) {
+                    val currentPost = (_post.value as? Resource.Success)?.data
+                    currentPost?.let { post ->
+                        val nutrition = Nutrition(
+                            calories = result.data.calories,
+                            protein = result.data.protein,
+                            carbs = result.data.carbs,
+                            fat = result.data.fat,
+                            fiber = result.data.fiber,
+                            sugar = result.data.sugar,
+                            healthTips = result.data.healthTips
+                        )
+                        val updatedPost = post.copy(nutrition = nutrition)
+                        _post.value = Resource.Success(updatedPost)
+                    }
+                }
+            }
+        }
+    }
+
+    fun loadLikesUsers() {
+        val postId = currentPostId ?: return
+        viewModelScope.launch {
+            postRepository.getPostLikes(postId).collectLatest { result ->
+                _likesUsers.value = result
+            }
+        }
+    }
+
+    fun clearLikesUsers() {
+        _likesUsers.value = null
     }
 }

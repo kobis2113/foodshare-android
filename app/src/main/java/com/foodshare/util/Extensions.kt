@@ -99,6 +99,14 @@ fun String.toRelativeTime(): String {
     }
 }
 
+fun getFullImageUrl(url: String?): String? {
+    return when {
+        url.isNullOrEmpty() -> null
+        url.startsWith("http") -> url
+        else -> "${BuildConfig.BASE_URL}${url.removePrefix("/")}"
+    }
+}
+
 fun getFileFromUri(context: Context, uri: Uri): File? {
     return try {
         val inputStream = context.contentResolver.openInputStream(uri) ?: return null

@@ -68,6 +68,23 @@ interface FoodShareApi {
         @Field("text") text: String
     ): Response<CommentResponse>
 
+    @FormUrlEncoded
+    @PUT("api/posts/{postId}/comments/{commentId}")
+    suspend fun updateComment(
+        @Path("postId") postId: String,
+        @Path("commentId") commentId: String,
+        @Field("text") text: String
+    ): Response<CommentResponse>
+
+    @DELETE("api/posts/{postId}/comments/{commentId}")
+    suspend fun deleteComment(
+        @Path("postId") postId: String,
+        @Path("commentId") commentId: String
+    ): Response<MessageResponse>
+
+    @GET("api/posts/{id}/likes")
+    suspend fun getPostLikes(@Path("id") postId: String): Response<LikesResponse>
+
     // Users
     @GET("api/users/me")
     suspend fun getMyProfile(): Response<UserProfileResponse>

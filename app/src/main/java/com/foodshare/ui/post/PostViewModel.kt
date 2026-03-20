@@ -166,7 +166,15 @@ class PostViewModel @Inject constructor(
                             append("Protein: ${nutrition?.protein ?: "N/A"}g\n")
                             append("Carbs: ${nutrition?.carbs ?: "N/A"}g\n")
                             append("Fat: ${nutrition?.fat ?: "N/A"}g\n")
-                            nutrition?.tips?.let { append("\n$it") }
+                            // Add health tips from AI
+                            nutrition?.healthTips?.let { healthTips ->
+                                if (healthTips.isNotEmpty()) {
+                                    append("\nHealth Tips:\n")
+                                    healthTips.forEach { tip ->
+                                        append("• $tip\n")
+                                    }
+                                }
+                            }
                         }
                         _nutritionTips.value = Resource.Success(tips)
                     }
