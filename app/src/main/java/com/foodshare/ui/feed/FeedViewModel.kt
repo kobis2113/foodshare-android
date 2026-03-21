@@ -28,11 +28,39 @@ class FeedViewModel @Inject constructor(
     private val _posts = MutableLiveData<MutableList<Post>>(mutableListOf())
     val posts: LiveData<MutableList<Post>> = _posts
 
+    private val _searchQuery = MutableLiveData<String?>(null)
+    val searchQuery: LiveData<String?> = _searchQuery
+
     private var currentPage = 1
     private var hasMore = true
+    private var searchCurrentPage = 1
+    private var searchHasMore = true
     private var isLoading = false
 
+    fun setSearchQuery(query: String) {
+        val trimmed = query.trim()
+        if (trimmed.isEmpty()) {
+            if (_searchQuery.value != null) {
+                _searchQuery.value = null
+                loadPosts(refresh = true)
+            }
+        } else {
+            _posts.value = mutableListOf()
+            _searchQuery.value = trimmed
+            loadSearchPosts(refresh = true)
+        }
+    }
+
+    fun refresh() {
+        if (_searchQuery.value != null) {
+            loadSearchPosts(refresh = true)
+        } else {
+            loadPosts(refresh = true)
+        }
+    }
+
     fun loadPosts(refresh: Boolean = false) {
+        if (_searchQuery.value != null) return
         if (isLoading) return
 
         if (refresh) {
@@ -62,8 +90,43 @@ class FeedViewModel @Inject constructor(
         }
     }
 
+    private fun loadSearchPosts(refresh: Boolean = false) {
+        val q = _searchQuery.value ?: return
+        if (isLoading) return
+
+        if (refresh) {
+            searchCurrentPage = 1
+            searchHasMore = true
+            _posts.value = mutableListOf()
+        }
+
+        if (!searchHasMore) return
+
+        isLoading = true
+        viewModelScope.launch {
+            postRepository.searchPosts(q, searchCurrentPage).collectLatest { result ->
+                isLoading = false
+                _postsState.value = result
+
+                if (result is Resource.Success) {
+                    result.data?.let { response ->
+                        val currentList = _posts.value ?: mutableListOf()
+                        currentList.addAll(response.posts)
+                        _posts.value = currentList
+                        searchHasMore = response.pagination.hasMore
+                        searchCurrentPage++
+                    }
+                }
+            }
+        }
+    }
+
     fun loadMore() {
-        loadPosts()
+        if (_searchQuery.value != null) {
+            loadSearchPosts(refresh = false)
+        } else {
+            loadPosts(refresh = false)
+        }
     }
 
     fun toggleLike(postId: String, position: Int) {
