@@ -126,7 +126,13 @@ class FeedFragment : Fragment() {
                 return true
             }
 
-            override fun onQueryTextChange(newText: String?) = false
+            override fun onQueryTextChange(newText: String?): Boolean {
+                // Clearing the field without submitting left the ViewModel in search mode; reset feed when empty.
+                if (newText.isNullOrBlank()) {
+                    viewModel.setSearchQuery("")
+                }
+                return false
+            }
         })
         searchView.setOnCloseListener {
             viewModel.setSearchQuery("")
