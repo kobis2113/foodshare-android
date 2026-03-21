@@ -4,9 +4,9 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.widget.SearchView
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -61,6 +61,7 @@ class FeedFragment : Fragment() {
             currentUserId = user?.id
         }
 
+        setupToolbar()
         setupRecyclerView()
         setupSwipeRefresh()
         setupFab()
@@ -113,10 +114,30 @@ class FeedFragment : Fragment() {
         }
     }
 
+    private fun setupToolbar() {
+        binding.toolbar.inflateMenu(R.menu.menu_feed)
+        val searchItem = binding.toolbar.menu.findItem(R.id.action_search)
+        val searchView = searchItem.actionView as SearchView
+        searchView.queryHint = getString(R.string.search_hint)
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                viewModel.setSearchQuery(query.orEmpty())
+                searchView.clearFocus()
+                return true
+            }
+
+            override fun onQueryTextChange(newText: String?) = false
+        })
+        searchView.setOnCloseListener {
+            viewModel.setSearchQuery("")
+            false
+        }
+    }
+
     private fun setupSwipeRefresh() {
         binding.swipeRefresh.setColorSchemeResources(R.color.primary)
         binding.swipeRefresh.setOnRefreshListener {
-            viewModel.loadPosts(refresh = true)
+            viewModel.refresh()
         }
     }
 
@@ -127,15 +148,24 @@ class FeedFragment : Fragment() {
     }
 
     private fun observeViewModel() {
-        viewModel.posts.observe(viewLifecycleOwner) { posts ->
+        val updateEmptyState = {
+            val posts = viewModel.posts.value.orEmpty()
             postAdapter.submitList(posts.toList())
-
             if (posts.isEmpty()) {
                 binding.tvEmptyState.visible()
+                val isSearch = !viewModel.searchQuery.value.isNullOrBlank()
+                binding.tvEmptyState.text = if (isSearch) {
+                    getString(R.string.no_search_results)
+                } else {
+                    getString(R.string.no_posts)
+                }
             } else {
                 binding.tvEmptyState.gone()
             }
         }
+
+        viewModel.posts.observe(viewLifecycleOwner) { updateEmptyState() }
+        viewModel.searchQuery.observe(viewLifecycleOwner) { updateEmptyState() }
 
         viewModel.postsState.observe(viewLifecycleOwner) { result ->
             when (result) {
@@ -166,7 +196,7 @@ class FeedFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         // Auto-refresh when returning to the feed
-        viewModel.loadPosts(refresh = true)
+        viewModel.refresh()
     }
 
     override fun onDestroyView() {
